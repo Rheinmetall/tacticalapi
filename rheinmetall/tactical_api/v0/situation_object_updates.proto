@@ -1,0 +1,668 @@
+// Copyright(c) 2026 Rheinmetall Electronics GmbH
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Eclipse Distribution License
+// v. 1.0 which is available at
+// http://www.eclipse.org/org/documents/edl-v10.php.
+//
+// SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
+
+syntax = "proto3";
+
+package rheinmetall.tactical_api.v0;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "rheinmetall/tactical_api/v0/situation_object_locations.proto";
+import "rheinmetall/tactical_api/v0/types.proto";
+
+// The type of the situation object to add or update.
+// Note: only one of the situation object types is supported at a time!
+message UpdateSituationObject {
+  oneof type {
+    UpdateSymbol symbol = 1;
+    UpdateActionTask action_task = 2;
+    UpdateActionEvent action_event = 3;
+    UpdateOrganizationUnit organization_unit = 4;        
+    UpdateRoute route = 5;
+    UpdateTextDocument text_document = 6;
+    UpdatePictureDocument picture_document = 7;
+    UpdateVoiceMessageDocument voice_message_document = 8;
+    UpdateNatoMessageDocument nato_message_document = 9;
+    UpdateOverlayDocument overlay_document = 10;
+    UpdateSketchDocument sketch_document = 11;
+  }
+}
+
+// Specifies a situation object to be deleted.
+message DeleteSituationObject {
+  // Required: The unique identity of the symbol.
+  Identity identity = 1;
+  // Required: The ID of the reporter who generated the changes. Will be
+  // obtainable via a the interface later on. For now, use the value you get
+  // from Rheinmetall - use "TacticalAPI" if in doubt. 
+  Identity reporter = 2;
+  // Required: Time of changes. Only the most up-to-date information is
+  // considered, so use the current UTC time for new changes but make sure to
+  // use the same timestamp as before when nothing changed. 
+  google.protobuf.Timestamp reporting_time = 3;   
+}
+
+// Messages below are all possible data properties for the situation objects to
+// add or update.
+// These data properties specify the fields to be changed. That means the
+// content value can be null. If the value should not be changed, then omit the
+// entire property.
+
+// Data property for integer 32 values.
+message UpdatePropertyInt {
+  // Nullable integer 32 value.
+  google.protobuf.Int32Value content = 2;
+}
+
+// Data property for string values.
+message UpdatePropertyString {
+  // Nullable string value.
+  google.protobuf.StringValue content = 2;
+}
+
+// Data property for date time values. All date times should be UTC based.
+message UpdatePropertyTimestamp {
+  // Nullable time stamp value.
+  google.protobuf.Timestamp content = 2;
+}
+
+// Data property for byte array values.
+message UpdatePropertyByteArray {
+  // Byte array (empty was handled as null).
+  bytes content = 2;
+  // The byte array type as MIME type. It can be empty if the data type is
+  // obvious. See https://en.wikipedia.org/wiki/Internet_Media_Type
+  google.protobuf.StringValue type = 3;
+}
+
+// Data property for identity values with additional ID source.
+message UpdatePropertyIdentity {
+  // Nullable identity value.
+  Identity content = 2;
+  // The source of the identity normally the source of the foreign key (more
+  // information below).
+  google.protobuf.StringValue source = 3;
+}
+
+// Data property for app6 or mil2525 symbol identifier values.
+message UpdatePropertySymbolIdentifier {
+  // Nullable symbol identifier for standard symbols like app6 or mil2525
+  // standards.
+  SymbolIdentifier content = 2;
+}
+
+// Data property for location values.
+message UpdatePropertyLocation {
+  // Nullable location.
+  SymbolLocation content = 2;
+}
+
+// Data property for a list of reference ID values.
+message UpdatePropertyReferences {
+  // List of identities for reference between situation objects.
+  repeated Identity contents = 2;
+}
+
+// Data property for color values.
+message UpdatePropertyColor {
+  // Nullable color.
+  Color content = 2;
+}
+
+// Data property for a list of situation object values.
+message UpdatePropertySituationObjects {
+  // List of situation object. 
+  // Don't use situation objects of type 'OverlayDocument' here 
+  // to avoid recursion.
+  repeated UpdateSituationObject contents = 2;
+}
+
+// Data property for dimension (X, Y, Z).
+message UpdatePropertyDimension {
+  // Nullable integer 32 value in [m].
+  google.protobuf.Int32Value x = 2;
+  // Nullable integer 32 value in [m].
+  google.protobuf.Int32Value y = 3;
+  // Nullable integer 32 value in [m].
+  google.protobuf.Int32Value z = 4;
+}
+
+// Messages below are all possible data property enumerations for the situation
+// objects. 
+// All enumerations have an unspecified type. This is treated internal as null /
+// not set.
+
+// The message precedence for documents like routine, flash, normal or
+// immediate.
+message UpdatePropertyMessagePrecedence {
+  MessagePrecedenceType content = 2;    
+}
+
+// The message category for documents like normal, private, warning or
+// operational.
+message UpdatePropertyMessageCategory {
+  MessageCategoryType content = 2;    
+}
+
+// The possible action events type.
+message UpdatePropertyActionEvent {
+  ActionEventType content = 2;    
+}
+
+// The possible action tasks type.
+message UpdatePropertyActionTask {
+  ActionTaskType content = 2;    
+}
+
+// The possible action tasks status.
+message UpdatePropertyActionTaskStatus {
+  ActionTaskStatusType content = 2;    
+}
+
+// The possible action tasks priority.
+message UpdatePropertyActionTaskPriorityCode {
+  ActionTaskPriorityType content = 2;    
+}
+
+// The amplifier for a unit symbol like reinforced, reduced, reinforced and
+// reduced. 
+message UpdatePropertyReinforcement {
+  ReinforcementType content = 2;    
+}
+
+// The unit designations like section, platoon etc.
+message UpdatePropertyUnitDesignation {
+  UnitDesignation content = 2;    
+}
+
+// The different line styles like solid, dash and dotted.
+message UpdatePropertyLineStyle {
+  LineStyle content = 2;    
+}
+
+// The different route types. 
+message UpdatePropertyRouteType {
+  RouteType content = 2;
+}
+
+// Creates or updates a symbol object normally shown on map as point, line or
+// area.
+// Normally, the symbol includes a location and a symbol identifier according to
+// the MIL2525 or APP6 standard.
+// If the symbol identifier is not specified, only a point location is expected;
+// this is an unspecified symbol that is considered hostile.
+message UpdateSymbol {
+  // Required: The unique identity of the symbol.
+  Identity identity = 1;
+  // Required: The ID of the reporter who generated the changes. Will be
+  // obtainable via a the interface later on. For now, use the value you get
+  // from Rheinmetall - use "TacticalAPI" if in doubt. 
+  Identity reporter = 2;
+  // Required: Time of changes. Only the most up-to-date information is
+  // considered, so use the current UTC time for new changes but make sure to
+  // use the same timestamp as before when nothing changed.
+  google.protobuf.Timestamp reporting_time = 3;   
+  // Expiry timestamp of the symbol. Expired symbols are automatically marked as
+  // deleted and removed from the map. It's possible to extend this time. 
+  UpdatePropertyTimestamp expiry_time = 4;    
+  // A foreign key for mediation between external systems/interfaces, some
+  // external interfaces also create their own ID for added objects.
+  UpdatePropertyIdentity foreign_key = 5;  
+  // The location of the symbol. Areas, lines, corridors, points etc. are
+  // possible here. 
+  UpdatePropertyLocation location = 6;
+  // Name of the symbol.
+  UpdatePropertyString name = 7;
+  // Addition information for the symbol.
+  UpdatePropertyString additional_information = 8;
+
+  // The identifier for mil2525 or app6 standard symbols. Leave empty to create
+  // a possible hostile unspecified symbol. 
+  UpdatePropertySymbolIdentifier symbol_identifier = 20;   
+  // An amplifier for units that indicates number or title of higher echelon
+  // \command (corps are designated by Roman numerals).
+  UpdatePropertyString higher_formation = 21;
+  // An amplifier in a unit symbol that displays (+) for reinforced, (-) for
+  // reduced, (+) reinforced and reduced.
+  UpdatePropertyReinforcement reinforcement = 22;  
+  // Start time of the symbol object, used for command and control lines for
+  // example. 
+  UpdatePropertyTimestamp start_time = 24;
+  // End time of the symbol object, used for command and control lines for
+  // example.
+  UpdatePropertyTimestamp end_time = 25;
+  // A text amplifier for equipment that indicates types of equipment.
+  UpdatePropertyString equipment_type = 26;
+  //A text amplifier in an equipment symbol that identifies the number of items
+  // present.
+  UpdatePropertyInt quantity = 27;
+  // A text amplifier for units, equipment, and installations; content is
+  // implementation specific.
+  UpdatePropertyString staff_comment = 28;       
+  // The dimension of the symbol (normally filled by classification engines).
+  UpdatePropertyDimension dimension = 31;
+}
+
+// Creates or updates a action task for personal and equipment like drones.
+message UpdateActionTask {
+  // Required: The unique identity of the action task.
+  Identity identity = 1;
+  // Required: The ID of the reporter who generated the changes. Will be
+  // obtainable via a the interface later on. For now, use the value you get
+  // from Rheinmetall - use "TacticalAPI" if in doubt. 
+  Identity reporter = 2;
+  // Required: Time of changes. Only the most up-to-date information is
+  // considered, so use the current UTC time for new changes but make sure to
+  // use the same timestamp as before when nothing changed.
+  google.protobuf.Timestamp reporting_time = 3;    
+  // Expiry timestamp of the action task. Expired action task are automatically
+  // marked as deleted and removed from the map. It's possible to extend this
+  // time. 
+  UpdatePropertyTimestamp expiry_time = 4;    
+  // A foreign key for mediation between external systems/interfaces, some
+  // external interfaces also create their own ID for added objects.
+  UpdatePropertyIdentity foreign_key = 5;   
+  // The location of the action task.
+  UpdatePropertyLocation location = 6;
+  // Name of the action task.
+  UpdatePropertyString name = 7;
+  // Addition information for the action task.
+  UpdatePropertyString additional_information = 8;
+
+  // The type of action task like engage, reconnaissance etc.
+  UpdatePropertyActionTask action_task_type = 20;
+  // The specific value that represents the status of this particular task at a
+  // given time.
+  UpdatePropertyActionTaskStatus action_task_status = 21;
+  // The specific value that represents the rank of importance of a specific
+  // task in view of the planning organization.
+  UpdatePropertyActionTaskPriorityCode action_task_priority = 22;
+  // The numeric quotient value that represents the portion of a whole task that
+  // is estimated to have occurred or been accomplished. The value must be in
+  // the range from 0 to 100 percent.
+  // For example surveillance of drone operation.
+  UpdatePropertyInt completion_ratio = 23;
+  // The point in time that designates the occurrence of the planned beginning
+  // of the specific task.
+  UpdatePropertyTimestamp planned_start_time = 24;
+  // The point in time that designates the occurrence of the planned ending of
+  // the specific task.
+  UpdatePropertyTimestamp planned_end_time = 25;
+  // List of action task effect reference IDs (which are the affected objects,
+  // e.g., object to be monitored).
+  UpdatePropertyReferences action_task_effects = 26;
+  // List of action task resource reference IDs (the units or devices to which
+  // the task is assigned or is to be performed).
+  UpdatePropertyReferences action_task_resources = 27;    
+}
+
+// Creates or updates a action event that is an incident, phenomenon, or
+// occasion of military significance which has occurred or is occurring but for
+// which planning is not known.
+message UpdateActionEvent {
+  // Required: The unique identity of the action event.    
+  Identity identity = 1;
+  // Required: The ID of the reporter who generated the changes. Will be
+  // obtainable via a the interface later on. For now, use the value you get
+  // from Rheinmetall - use "TacticalAPI" if in doubt. 
+  Identity reporter = 2;
+  // Required: Time of changes. Only the most up-to-date information is
+  // considered, so use the current UTC time for new changes but make sure to
+  // use the same timestamp as before when nothing changed.
+  google.protobuf.Timestamp reporting_time = 3; 
+  // Expiry timestamp of the action event. Expired action event are
+  // automatically marked as deleted and removed from the map. It's possible to
+  // extend this time. 
+  UpdatePropertyTimestamp expiry_time = 4;    
+  // A foreign key for mediation between external systems/interfaces, some
+  // external interfaces also create their own ID for added objects.
+  UpdatePropertyIdentity foreign_key = 5; 
+  // The location of the action event.
+  UpdatePropertyLocation location = 6;
+  // Name of the action event.
+  UpdatePropertyString name = 7;
+  // Addition information for the action event.
+  UpdatePropertyString additional_information = 8;
+
+  // Type of action event like detection, accident, crash, fix etc.
+  UpdatePropertyActionEvent action_event_type = 20;
+  // Addition location for internal use only.
+  UpdatePropertyLocation additional_location = 21;
+  // Location of reporting unit, materiel or system.
+  UpdatePropertyLocation location_of_reporter = 22;
+  // Degree to which the object resembles a threat. 
+  UpdatePropertyInt threat_level = 23;
+  // Description of detection like sensor information.
+  UpdatePropertyString detection_description = 24;
+  // Dimension of detected object.
+  UpdatePropertyDimension dimension = 25;
+}
+
+// Creates or updates a route object that is the prescribed course to be
+// travelled from a specific point of origin to a specific destination. 
+message UpdateRoute {
+  // Required: The unique identity of the route. 
+  Identity identity = 1;
+  // Required: The ID of the reporter who generated the changes. Will be
+  // obtainable via a the interface later on. For now, use the value you get
+  // from Rheinmetall - use "TacticalAPI" if in doubt. 
+  Identity reporter = 2;
+  // Required: Time of changes. Only the most up-to-date information is
+  // considered, so use the current UTC time for new changes but make sure to
+  // use the same timestamp as before when nothing changed.
+  google.protobuf.Timestamp reporting_time = 3;   
+  // Expiry timestamp of the route. Expired route are automatically marked as
+  // deleted and removed from the map. It's possible to extend this time. 
+  UpdatePropertyTimestamp expiry_time = 4;    
+  // A foreign key for mediation between external systems/interfaces, some
+  // external interfaces also create their own ID for added objects.
+  UpdatePropertyIdentity foreign_key = 5;
+  // The location of the route of type 'RouteLocation'.
+  UpdatePropertyLocation location = 6;
+  // Name of the route.
+  UpdatePropertyString name = 7;
+  // Addition information for the route.
+  UpdatePropertyString additional_information = 8;
+
+  // The planned march speed in [m/s].
+  UpdatePropertyInt march_speed = 20;
+  // The color of route on map.
+  UpdatePropertyColor line_color = 21;
+  // The width of the route in map [pixel].
+  UpdatePropertyInt line_width = 22;    
+  // The route line style on map like solid, dash or dot.
+  UpdatePropertyLineStyle line_style = 23;   
+  // The type of route. 
+  UpdatePropertyRouteType route_type = 24;
+}
+
+// Creates or updates a own organization units to describe an organization
+// structure like an orbat.
+message UpdateOrganizationUnit {
+  // Required: The unique identity of the organization unit. 
+  Identity identity = 1;
+  // Required: The ID of the reporter who generated the changes. Will be
+  // obtainable via a the interface later on. For now, use the value you get
+  // from Rheinmetall - use "TacticalAPI" if in doubt. 
+  Identity reporter = 2;
+  // Required: Time of changes. Only the most up-to-date information is
+  // considered, so use the current UTC time for new changes but make sure to
+  // use the same timestamp as before when nothing changed.
+  google.protobuf.Timestamp reporting_time = 3;    
+  // Expiry timestamp of the organization units. Expired organization units are
+  // automatically marked as deleted and removed from the map. It's possible to
+  // extend this time. 
+  UpdatePropertyTimestamp expiry_time = 4;  
+  // A foreign key for mediation between external systems/interfaces, some
+  // external interfaces also create their own ID for added objects.
+  UpdatePropertyIdentity foreign_key = 5;
+  // Name of the organization unit.
+  UpdatePropertyString name = 7;
+  // Addition information for the organization unit.
+  UpdatePropertyString additional_information = 8;
+
+  // The symbol identifier for this organization unit according to the MIL 2525
+  // or APP6 standard
+  UpdatePropertySymbolIdentifier symbol_identifier = 20;
+  // An amplifier for units that indicates number or title of higher echelon
+  // command.
+  UpdatePropertyString higher_formation = 21;
+  // The color of the organization unit on map to mark related units in lists
+  // and on map.
+  UpdatePropertyColor organization_unit_color = 22;
+  // The unit designation of the soldier organization unit.
+  UpdatePropertyUnitDesignation unit_designation = 23;
+  // List of subordinated organization units.
+  UpdatePropertyReferences subordinated_organization_unit_collection = 24;
+}
+
+// Creates or updates a document that's includes a geo references free hand
+// drawing.
+message UpdateSketchDocument {
+  // Required: The unique identity of the sketch. 
+  Identity identity = 1;
+  // Required: The ID of the reporter who generated the changes. Will be
+  // obtainable via a the interface later on. For now, use the value you get
+  // from Rheinmetall - use "TacticalAPI" if in doubt. 
+  Identity reporter = 2;
+  // Required: Time of changes. Only the most up-to-date information is
+  // considered, so use the current UTC time for new changes but make sure to
+  // use the same timestamp as before when nothing changed.
+  google.protobuf.Timestamp reporting_time = 3;    
+  // Expiry timestamp of the sketch. Expired sketch are automatically marked as
+  // deleted and removed from the map. It's possible to extend this time. 
+  UpdatePropertyTimestamp expiry_time = 4;    
+  // A foreign key for mediation between external systems/interfaces, some
+  // external interfaces also create their own ID for added objects.
+  UpdatePropertyIdentity foreign_key = 5;
+  // The sketch location with sketch elements.
+  UpdatePropertyLocation location = 6;
+  // Name of the sketch.
+  UpdatePropertyString name = 7;
+  // Addition information for the sketch.
+  UpdatePropertyString additional_information = 8;
+
+  // The message category of the sketch document like normal, private, warning
+  // or operational.
+  UpdatePropertyMessageCategory message_category = 20;
+  // The message precedence of the sketch document like routine, flash, normal
+  // or immediate.
+  UpdatePropertyMessagePrecedence message_precedence = 21;    
+}
+
+// Creates or updates a text document that includes a free hand sketch.
+message UpdateTextDocument {
+  // Required: The unique identity of the text document. 
+  Identity identity = 1;
+  // Required: The ID of the reporter who generated the changes. Will be
+  // obtainable via a the interface later on. For now, use the value you get
+  // from Rheinmetall - use "TacticalAPI" if in doubt. 
+  Identity reporter = 2;
+  // Required: Time of changes. Only the most up-to-date information is
+  // considered, so use the current UTC time for new changes but make sure to
+  // use the same timestamp as before when nothing changed.
+  google.protobuf.Timestamp reporting_time = 3;    
+  // Expiry timestamp of the text document. Expired text document are
+  // automatically marked as deleted and removed from the map. It's possible to
+  // extend this time. 
+  UpdatePropertyTimestamp expiry_time = 4;    
+  // A foreign key for mediation between external systems/interfaces, some
+  // external interfaces also create their own ID for added objects.
+  UpdatePropertyIdentity foreign_key = 5;    
+  // The location of the text document to set a marker on map.
+  UpdatePropertyLocation location = 6;
+  // Name of the text document.
+  UpdatePropertyString name = 7;
+  // Addition information for the sketch.
+  UpdatePropertyString additional_information = 8;
+
+  // A sketch for the text document in the Microsoft ISF (Ink Serialized Format)
+  // See https://en.wikipedia.org/wiki/Ink_Serialized_Format.
+  UpdatePropertyByteArray free_hand_drawing_data = 20;
+  // Content of the text message in Rich Text Format. See
+  // https://wikipedia.org/wiki/Rich_Text_Format. This is the preferred format.
+  UpdatePropertyString content = 21;
+  // The content of the text message without formatting of the Rich Text Format.
+  // Should always be filled, especially when the RTF field above is filled.
+  UpdatePropertyString plain_content = 22;
+  // The message category of the text document like normal, private, warning or
+  // operational.
+  UpdatePropertyMessageCategory message_category = 23;
+  // The message precedence of the text document like routine, flash, normal or
+  // immediate.
+  UpdatePropertyMessagePrecedence message_precedence = 24;    
+}
+
+// Creates or updates a picture document.
+message UpdatePictureDocument {
+  // Required: The unique identity of the picture document. 
+  Identity identity = 1;
+  // Required: The ID of the reporter who generated the changes. Will be
+  // obtainable via a the interface later on. For now, use the value you get
+  // from Rheinmetall - use "TacticalAPI" if in doubt. 
+  Identity reporter = 2;
+  // Required: Time of changes. Only the most up-to-date information is
+  // considered, so use the current UTC time for new changes but make sure to
+  // use the same timestamp as before when nothing changed.
+  google.protobuf.Timestamp reporting_time = 3;
+  // Expiry timestamp of the picture document. Expired picture document are
+  // automatically marked as deleted and removed from the map. It's possible to
+  // extend this time. 
+  UpdatePropertyTimestamp expiry_time = 4;    
+  // A foreign key for mediation between external systems/interfaces, some
+  // external interfaces also create their own ID for added objects.
+  UpdatePropertyIdentity foreign_key = 5;
+  // The location of where the picture is taken (normally a point location).
+  UpdatePropertyLocation location = 6;
+  // Name of the picture document.
+  UpdatePropertyString name = 7;
+  // Addition information for the picture document.
+  UpdatePropertyString additional_information = 8;
+
+  // A thumbnail of the picture (The data from the captured image 'picture_data'
+  // was only used if sufficient bandwidth was available). The number of bytes
+  // should be less than 1000 bytes.
+  UpdatePropertyByteArray low_res_picture_data = 20;
+  // The serialized data of the picture.
+  UpdatePropertyByteArray picture_data = 21;    
+  // The direction of view when the picture was taken in [degree]
+  UpdatePropertyInt direction_of_view = 23;
+  // The focal length of the camera when the picture was taken in [mm]
+  UpdatePropertyInt focal_length = 24;
+  // A free hand drawings as picture overlay to mark details in Microsoft ISF
+  // (Ink Serialized Format) https://en.wikipedia.org/wiki/Ink_Serialized_Format
+  UpdatePropertyByteArray free_hand_drawing_data = 25;
+  // The message category of the picture document like normal, private, warning
+  // or operational.
+  UpdatePropertyMessageCategory message_category = 26;
+  // The message precedence of the picture document like routine, flash, normal
+  // or immediate.
+  UpdatePropertyMessagePrecedence message_precedence = 27;    
+}
+
+// Creates or updates a voice message document.
+message UpdateVoiceMessageDocument {
+  // Required: The unique identity of the voice message document.
+  Identity identity = 1;
+  // Required: The ID of the reporter who generated the changes. Will be
+  // obtainable via a the interface later on. For now, use the value you get
+  // from Rheinmetall - use "TacticalAPI" if in doubt.
+  Identity reporter = 2;
+  // Required: Time of changes. Only the most up-to-date information is
+  // considered, so use the current UTC time for new changes but make sure to
+  // use the same timestamp as before when nothing changed.
+  google.protobuf.Timestamp reporting_time = 3;
+  // Expiry timestamp of the voice message document. Expired voice message
+  // document are automatically marked as deleted and removed from the map. It's
+  // possible to extend this time.
+  UpdatePropertyTimestamp expiry_time = 4;
+  // A foreign key for mediation between external systems/interfaces, some
+  // external interfaces also create their own ID for added objects.
+  UpdatePropertyIdentity foreign_key = 5;
+  // The location of the voice message document to set a marker on map.
+  UpdatePropertyLocation location = 6;
+  // Name of the voice message document.
+  UpdatePropertyString name = 7;
+  // Addition information for the voice message document.
+  UpdatePropertyString additional_information = 8;
+
+  // The serialized  sound file data.
+  UpdatePropertyByteArray sound_file = 20;
+  // The message category of the voice document like normal, private, warning or
+  // operational.
+  UpdatePropertyMessageCategory message_category = 22;
+  // The message precedence of the voice document like routine, flash, normal or
+  // immediate.
+  UpdatePropertyMessagePrecedence message_precedence = 23;    
+}
+
+// Creates or updates a standard message document.
+// The purpose of APP-11 is to provide user’s with definitive reference of
+// messages and supporting tables mandated for use in Joint, Land, Maritime and
+// Air Operations.
+// It is a compendium of formatted, structured and voice general purpose
+// messages for command and control of NATO forces at all levels of the Chain of
+// Command down to and including individual units. The formatted messages of
+// APP-11 are taken from the ADatP-03 database published in form of a baseline.
+// The latest version of the APP-11 catalogue consists of over 400 messages
+// covering every aspect of NATO operations
+message UpdateNatoMessageDocument {
+  // Required: The unique identity of the standard message document. 
+  Identity identity = 1;
+  // Required: The ID of the reporter who generated the changes. Will be
+  // obtainable via a the interface later on. For now, use the value you get
+  // from Rheinmetall - use "TacticalAPI" if in doubt. 
+  Identity reporter = 2;
+  // Required: Time of changes. Only the most up-to-date information is
+  // considered, so use the current UTC time for new changes but make sure to
+  // use the same timestamp as before when nothing changed.
+  google.protobuf.Timestamp reporting_time = 3;    
+  // Expiry timestamp of the standard message document. Expired standard message
+  // document are automatically marked as deleted and removed from the map. It's
+  // possible to extend this time. 
+  UpdatePropertyTimestamp expiry_time = 4;    
+  // A foreign key for mediation between external systems/interfaces, some
+  // external interfaces also create their own ID for added objects.
+  UpdatePropertyIdentity foreign_key = 5;
+  // The location here should be one of the locations from the standard message.
+  // Not necessary, only shows a marker on map without parsing the MTF message
+  // for example.
+  UpdatePropertyLocation location = 6;
+  // Name of the standard message document.
+  UpdatePropertyString name = 7;
+  // Addition information for the standard message document.
+  UpdatePropertyString additional_information = 8;
+
+  // The APP11 Message Text Formats (MTF)
+  UpdatePropertyString mtf_message_data = 20;
+  // The message category of the standard message document like normal, private,
+  // warning or operational.
+  UpdatePropertyMessageCategory message_category = 21;
+  // The message precedence of the standard message document like routine,
+  // flash, normal or immediate.
+  UpdatePropertyMessagePrecedence message_precedence = 22;    
+}
+
+// Creates or updates a overlay document that contains a list of situation
+// objects.
+message UpdateOverlayDocument {
+  // Required: The unique identity of the overlay document. 
+  Identity identity = 1;
+  // Required: The ID of the reporter who generated the changes. Will be
+  // obtainable via a the interface later on. For now, use the value you get
+  // from Rheinmetall - use "TacticalAPI" if in doubt. 
+  Identity reporter = 2;
+  // Required: Time of changes. Only the most up-to-date information is
+  // considered, so use the current UTC time for new changes but make sure to
+  // use the same timestamp as before when nothing changed.
+  google.protobuf.Timestamp reporting_time = 3;    
+  // Expiry timestamp of the overlay document. Expired overlay document are
+  // automatically marked as deleted and removed from the map. It's possible to
+  // extend this time. 
+  UpdatePropertyTimestamp expiry_time = 4;    
+  // A foreign key for mediation between external systems/interfaces, some
+  // external interfaces also create their own ID for added objects.
+  UpdatePropertyIdentity foreign_key = 5;    
+  // Name of the standard overlay document.
+  UpdatePropertyString name = 7;
+  // Addition information for the overlay document.
+  UpdatePropertyString additional_information = 8;
+
+  // A two-digit tag for the overlay to describe the overlay symbols on the map.
+  UpdatePropertyString tag = 20;  
+  // The contained overlay situation objects.
+  UpdatePropertySituationObjects overlay_data = 23;
+  // The message category of the overlay document like normal, private, warning
+  // or operational.
+  UpdatePropertyMessageCategory message_category = 24;
+  // The message precedence of the overlay document like routine, flash, normal
+  // or immediate.
+  UpdatePropertyMessagePrecedence message_precedence = 25;    
+}

@@ -1,0 +1,396 @@
+// Copyright(c) 2026 Rheinmetall Electronics GmbH
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Eclipse Distribution License
+// v. 1.0 which is available at
+// http://www.eclipse.org/org/documents/edl-v10.php.
+//
+// SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
+
+syntax = "proto3";
+
+package rheinmetall.tactical_api.v0;
+
+import "google/protobuf/wrappers.proto";
+
+// Unique ID for all objects and entities with different characteristic.
+// Note: only one of the identity types is supported at a time!
+message Identity {
+  oneof type {
+    // Unique ID of type GUID/UUID, format 
+    // "de305d54-75b4-431b-adb2-eb6b9e546014", definition here:
+    // https://www.rfc-editor.org/rfc/rfc9562.html#section-4-14.1.
+    string uuid_identity = 1;
+    // Unique ID of type string (shorter is better for low bandwidth
+    // communication).
+    string string_identity = 2;
+    // Unique ID of type int32, not for external use to create new objects. Used
+    // by internal team member for extreme low bandwidth scenarios.
+    int32 int32_identity = 3;
+    // Unique ID of type int64, not for external use to create new objects. Used
+    // by internal team member for extreme low bandwidth scenarios.
+    int64 int64_identity = 4;    
+  }
+}
+
+// A symbol identifier of a symbol standard like app6 or mil2525.
+// Note: only one of the identifiers is supported at a time!
+message SymbolIdentifier {  
+  oneof identifier {
+    // symbol identifier of type string (15 character) for app6b, mill2525c.
+    string string_identifier = 2;
+    // symbol identifier of type numeric (2 x 10 digits) for app6d, app6e,
+    // mill2525d, mill2525e.
+    NumericIdentifier numeric_identifier = 3;
+  }
+  // The used symbol catalog and standard for this symbol identifier.
+  SymbolCatalog symbol_catalog = 1;
+}
+
+// The specific value that represents the used symbol catalog and standard like
+// app6 or mil2525.
+enum SymbolCatalog {
+  SYMBOL_CATALOG_UNSPECIFIED = 0;
+  // Internal symbol standard for extra symbology.
+  SYMBOL_CATALOG_RME = 1;
+  // The APP6B symbol standard.
+  SYMBOL_CATALOG_APP6_B = 2;
+  // The APP6D symbol standard.
+  SYMBOL_CATALOG_APP6_D = 3;  
+  // The MIL2525C symbol standard.
+  SYMBOL_CATALOG_MIL2525_C = 4;
+  // The MIL2525D symbol standard.
+  SYMBOL_CATALOG_MIL2525_D = 5;
+  // The APP6E symbol standard.
+  SYMBOL_CATALOG_APP6_E = 6;
+  // The MIL2525E symbol standard.
+  SYMBOL_CATALOG_MIL2525_E = 7;
+}
+
+// The numeric symbol identification code is composed of eleven elements of
+// information which are presented in two sets of ten digits.
+message NumericIdentifier {
+  // Set A - First ten digits.
+  int64 first_ten_digits = 1;
+  // Set B - Second ten digits.
+  int64 second_ten_digits = 2;
+}
+
+// Message describes a color value.
+message Color {
+  // The amount of red in the color as a value in the interval [0, 255].
+  int32 red = 1;
+  // The amount of green in the color as a value in the interval [0, 255].
+  int32 green = 2;
+  // The amount of blue in the color as a value in the interval [0, 255].
+  int32 blue = 3;
+  // The fraction of this color that should be applied to the pixel. 
+  // This means that a value of 255 corresponds to a solid color, whereas
+  // a value of 0 corresponds to a completely transparent color. 
+  // If omitted, this color object is rendered as a solid color
+  // (as if the alpha value had been explicitly given a value of 255).
+  google.protobuf.Int32Value alpha = 4;
+}
+
+// The possible unit designation for the organization.
+enum UnitDesignation {
+  // It is not possible to determine which value is most applicable.
+  UNIT_DESIGNATION_UNSPECIFIED = 0;
+  // A small tactical unit.
+  UNIT_DESIGNATION_SECTION = 2;
+  // Basic administrative and tactical unit in most arms and services of the
+  // Army.
+  UNIT_DESIGNATION_PLATOON = 3;
+  // Basic administrative and tactical unit in most arms and services of the
+  // Army. A company is on a command level below a battalion and above a
+  // platoon.
+  UNIT_DESIGNATION_COMPANY = 4;
+  // Unit composed of a headquarters and two or more companies or batteries.
+  // It may be part of a regiment and be charged with only tactical functions,
+  // or it may be a separate unit and be charged with both administrative and
+  // tactical functions.
+  UNIT_DESIGNATION_BATTALION = 5;
+  // Administrative and tactical unit, on a command level below a division or
+  // brigade and above a battalion, the entire organisation of which is
+  // prescribed by table of organisation.
+  UNIT_DESIGNATION_REGIMENT = 6;
+}
+
+// The possible message precedence types.
+enum MessagePrecedenceType {
+  MESSAGE_PRECEDENCE_TYPE_UNSPECIFIED = 0;
+  MESSAGE_PRECEDENCE_TYPE_ROUTINE = 1;
+  MESSAGE_PRECEDENCE_TYPE_PRIORITY = 2;
+  MESSAGE_PRECEDENCE_TYPE_IMMEDIATE = 3;
+  MESSAGE_PRECEDENCE_TYPE_FLASH = 4;
+}
+
+// The possible message category types.
+enum MessageCategoryType {
+  MESSAGE_CATEGORY_TYPE_UNSPECIFIED = 0;
+  MESSAGE_CATEGORY_TYPE_NORMAL = 1;
+  MESSAGE_CATEGORY_TYPE_PRIVATE = 2;
+  MESSAGE_CATEGORY_TYPE_OPERATIONAL = 3;
+  MESSAGE_CATEGORY_TYPE_WARNING = 4;
+}
+
+// The specific value that represents whether a specific ORGANISATION has
+// additional or detached strength.
+enum ReinforcementType {     
+  REINFORCEMENT_TYPE_UNSPECIFIED = 0;
+  // The UNIT in question has no attachments or detachments.
+  REINFORCEMENT_TYPE_NORMAL = 1;
+  // The UNIT in question has additional UNITs attached.
+  REINFORCEMENT_TYPE_REINFORCED = 2;
+  // The UNIT in question has sub-UNITs detached.
+  REINFORCEMENT_TYPE_REDUCED = 3;  
+  // The UNIT in question has UNITs attached and sub-UNITs detached.
+  REINFORCEMENT_TYPE_REINFORCED_AND_REDUCED = 4;
+}
+
+// The specific value that represents the general class or nature of activity
+// prescribed by an action event.
+enum ActionEventType { 
+  // Unspecified action event.
+  ACTION_EVENT_TYPE_UNSPECIFIED = 0;
+  // An unfortunate event, esp. one causing physical harm or damage, brought
+  // about unintentionally.
+  ACTION_EVENT_TYPE_ACCIDENT = 1;
+  // An accident involving unexploded ordnance.
+  ACTION_EVENT_TYPE_ACCIDENT_MINE = 2;
+  // An accident involving at least one motor vehicle.
+  ACTION_EVENT_TYPE_ACCIDENT_TRAFFIC = 3;
+  // An accident involving a weapon.
+  ACTION_EVENT_TYPE_ACCIDENT_WEAPON = 4;
+  // An accident occurring at the workplace.
+  ACTION_EVENT_TYPE_ACCIDENT_WORKPLACE = 5;
+  // The unforeseen loss of an aircraft (and personnel), other than crash.
+  ACTION_EVENT_TYPE_AIRCRAFT_LOSS = 6;
+  // The unforeseen destruction or damage of an aircraft (and personnel).
+  ACTION_EVENT_TYPE_AIRCRAFT_CRASH = 7;
+  // The action of approaching and alighting on the ground or some other surface
+  // after a flight.
+  ACTION_EVENT_TYPE_AIRCRAFT_LANDING = 8;
+  // A surprise attack by fire or other destructive means from concealed
+  // positions on a moving or temporarily halted force or group of personnel.
+  ACTION_EVENT_TYPE_AMBUSH = 9;
+  // The use of artillery fire.
+  ACTION_EVENT_TYPE_ARTILLERY_FIRE = 10;
+  // The detection of a device intended to cause damage to unsuspecting people.
+  ACTION_EVENT_TYPE_BOOBY_TRAP_DISCOVERY = 11;
+  // Determining a position using acoustic data.
+  ACTION_EVENT_TYPE_FIX_ACOUSTIC = 12;
+  // Determining a position using electromagnetic data.
+  ACTION_EVENT_TYPE_FIX_ELECTROMAGNETIC = 13;
+  // Determining a position using electro-optical data.
+  ACTION_EVENT_TYPE_FIX_ELECTRO_OPTICAL = 14;
+  // An attack by one who shoots at others from a concealed place.
+  ACTION_EVENT_TYPE_SNIPER_ATTACK = 15;
+}
+
+// The specific value that represents the type of activity prescribed by the
+// action task.
+enum ActionTaskType {  
+  // Unspecified action task.
+  ACTION_TASK_TYPE_UNSPECIFIED = 0;
+  // To conduct an attack wherein a force attacks, or threatens to attack, a
+  // target other than the main target for the purpose of drawing enemy defences
+  // away from the main effort. 
+  ACTION_TASK_TYPE_ATTACK = 1;
+  // To bring the enemy under fire.
+  ACTION_TASK_TYPE_ENGAGE = 2;
+  // To conduct a mission to obtain by visual operations or other detection
+  // methods information about the activities and resources of an enemy or
+  // potential enemy, or to secure data concerning the meteorological,
+  // hydrographic or geographic characteristics of a particular area.
+  ACTION_TASK_TYPE_RECONNAISSANCE = 3;
+}
+
+// The specific value that represents the perceived appraisal of the progress of
+// a specific action task.
+enum ActionTaskStatusType {  
+  // Unspecified action task status.
+  ACTION_TASK_STATUS_TYPE_UNSPECIFIED = 0;
+  // The specified action task has been abandoned subsequent to its initiation.
+  ACTION_TASK_STATUS_TYPE_ABORTED = 1;
+  // The specified action task was cancelled prior to its initiation.
+  ACTION_TASK_STATUS_TYPE_CANCELLED = 2;        
+  // The specified action task has been carried out and is complete.
+  ACTION_TASK_STATUS_TYPE_COMPLETE = 3;
+  // The execution of the specified action task has been delayed beyond the
+  // planned starting time.
+  ACTION_TASK_STATUS_TYPE_DELAYED = 4;
+  // Hours that equipment e.g. helicopters, cannot operate due to weather
+  // conditions.
+  ACTION_TASK_STATUS_TYPE_DOWN_TIME_WEATHER = 5;
+  // The specified action task is in the process of being carried out at the
+  // time of the report.
+  ACTION_TASK_STATUS_TYPE_IN_PROGRESS = 6;
+  // The planned task was not carried out during a specified period.
+  ACTION_TASK_STATUS_TYPE_NO_OPERATION = 7;
+  // The specified action task has not yet begun at the time of the report.
+  ACTION_TASK_STATUS_TYPE_NOT_STARTED = 8;
+  // Hours that a unit is scheduled off task.
+  ACTION_TASK_STATUS_TYPE_OFF_TASK = 9;
+  // The specified action task has been temporarily halted for an unspecified
+  // period of time.
+  ACTION_TASK_STATUS_TYPE_PAUSED = 10;
+  // The specified action task is still in the planning phase.
+  ACTION_TASK_STATUS_TYPE_PLANNING = 11;
+  // The specified action task has been replaced or modified subsequent to its
+  // initiation.
+  ACTION_TASK_STATUS_TYPE_RETASKED = 12;
+  // The specified action task has been assigned, but the execution has not
+  // started.
+  ACTION_TASK_STATUS_TYPE_TASKED = 13;
+}
+
+// The specific value that represents the rank of importance of a specific
+// action task in view of the planning organisation.
+enum ActionTaskPriorityType {       
+  // Unspecified action task priority category.
+  ACTION_TASK_PRIORITY_TYPE_UNSPECIFIED = 0;
+  // The classification that denotes those action tasks which meet the criteria
+  // for being placed in the highest categorisation.
+  ACTION_TASK_PRIORITY_TYPE_PRIORITY1 = 1;
+  // The classification that denotes those action tasks which meet the criteria
+  // for being placed in the 2nd highest category.
+  ACTION_TASK_PRIORITY_TYPE_PRIORITY2 = 2;
+  // The classification that denotes those action tasks which meet the criteria
+  // for being placed in the 3rd highest category.
+  ACTION_TASK_PRIORITY_TYPE_PRIORITY3 = 3;
+  // The classification that denotes those action tasks which meet the criteria
+  // for being placed in the 4th highest category.
+  ACTION_TASK_PRIORITY_TYPE_PRIORITY4 = 4;
+  // The classification that denotes those action tasks which meet the criteria
+  // for being placed in the 5th highest category.
+  ACTION_TASK_PRIORITY_TYPE_PRIORITY5 = 5;
+}
+
+// The specific value that represents the route type.
+enum RouteType{
+  // The appropriate value is not in the set of specified values.
+  ROUTE_TYPE_UNSPECIFIED = 0;
+  // A designated route along which air traffic advisory service is available.
+  ROUTE_TYPE_ADVISORY_ROUTE = 1;
+  // A restricted air route of travel specified for use by friendly aircraft and
+  // established for the purpose of preventing friendly aircraft from being
+  // fired on by friendly forces.
+  ROUTE_TYPE_AIR_CORRIDOR = 2;
+  // The navigable airspace between two points identified to the extent
+  // necessary for the application of flight.
+  ROUTE_TYPE_AIR_ROUTE = 3;
+  // A control area or portion thereof established in the form of a corridor
+  // equipped with radio navigational aids.
+  ROUTE_TYPE_AIRWAY = 4;
+  // A route or routes designated within an area of operations to provide for
+  // the movement of traffic when main supply routes become disabled or
+  // congested.
+  ROUTE_TYPE_ALTERNATE_SUPPLY_ROUTE = 5;
+  // Airspace established for the safe passage of land based aircraft joining or
+  // departing a maritime force.
+  ROUTE_TYPE_APPROACH_CORRIDOR = 6;
+  // A specified route designed for channelling the flow of traffic as necessary
+  // for the provision of air traffic services (ATS).
+  ROUTE_TYPE_AIR_TRAFFIC_SERVICES_ROUTE = 7;
+  // A non-permanent air traffic service route or portion thereof which can be
+  // planned and used only under certain conditions.
+  ROUTE_TYPE_CONDITIONAL_ROUTE = 8;
+  // Conventional route.
+  ROUTE_TYPE_CONVENTIONAL_ROUTE = 9;
+  // Direct routing;
+  ROUTE_TYPE_DCT = 10;
+  // An outbound route from a specific area or target.
+  ROUTE_TYPE_EGRESS_ROUTE = 11;
+  // The line connecting the successive positions occupied, or to be occupied,
+  // by an aircraft, missile or space vehicle as it moves through air or space.
+  ROUTE_TYPE_FLIGHT_PATH = 12;
+  // The route that follows the shortest arc between two points on the earth's
+  // surface.
+  ROUTE_TYPE_GREAT_CIRCLE_ROUTE = 13;
+  // An inbound route to a specific area or target.
+  ROUTE_TYPE_INGRESS_ROUTE = 14;
+  // A route generally parallel to the forward edge of the battle area, which
+  // crosses, or feeds into, axial routes.
+  ROUTE_TYPE_LATERAL_ROUTE = 15;
+  // A temporary corridor of defined dimensions established in the forward area
+  // to minimise the risk to friendly aircraft from friendly air defences or
+  // surface forces.
+  ROUTE_TYPE_LOW_LEVEL_TRANSIT_ROUTE = 16;
+  // The prescribed line over the ground along which the centre of the mine
+  // counter measures gear must travel in order that the lane swept can be
+  // defined by the width and the depth swept.
+  ROUTE_TYPE_MARITIME_MINEFIELD_SWEEP_TRACK = 17;
+  // The prescribed line over the ground along which the centre of the
+  // minelaying gear must travel.
+  ROUTE_TYPE_MARITIME_MINELAYING_TRACK = 18;
+  // A temporary corridor of defined dimensions recommended for use by
+  // high-speed, fixed-wing aircraft that presents the minimum known hazards to
+  // low-flying aircraft transiting the combat zone. Army--An MRR is a temporary
+  // flight route recommended for USAF use. It presents the minimum known
+  // hazards to low-flying aircraft in the control zone (CZ). The MRR must be
+  // approved by the airspace control authority and avoids fire support targets
+  // such as air defence weapons, landing zones, pick-up zones, FARPs, and Army
+  // airfields.
+  ROUTE_TYPE_MINIMUM_RISK_ROUTE = 19;
+  // The route or routes designated with an area of operations on which the bulk
+  // of traffic flows in support of military operations.
+  ROUTE_TYPE_MAIN_SUPPLY_ROUTE = 20;
+  // An air traffic services route established for the use of aircraft capable
+  // of employing area navigation.
+  ROUTE_TYPE_AREA_NAVIGATION_ROUTE = 21;  
+  // Polar route.    
+  ROUTE_TYPE_POLAR_ROUTE = 22;
+  // A system of preplanned shipping lanes in mined or potentially mined waters
+  // used to minimize the area the mine countermeasures commander has to keep
+  // clear of mines in order to provide safe passage for friendly shipping.
+  ROUTE_TYPE_Q_ROUTE = 23;
+  // A part of a system of preplanned shipping lanes in mined or potentially
+  // mined waters used to minimize the area the mine countermeasures commander
+  // has to keep clear of mines in order to provide safe passage for friendly
+  // shipping.
+  ROUTE_TYPE_Q_ROUTE_SEGMENT = 24;
+  // The prescribed reference line over the ground along which the centre of the
+  // mine counter measures gear must travel.
+  ROUTE_TYPE_REFERENCE_TRACK = 25;
+  // Planned route profiles for use by friendly aircraft returning to an
+  // aircraft-capable ship.
+  ROUTE_TYPE_RETURN_TO_FORCE_ROUTE = 26;
+  // The route that maintains a constant direction, shown on a map as a line
+  // crossing all meridians at the same angle.
+  ROUTE_TYPE_RHUMB_LINE_ROUTE = 27;
+  // An area established to accommodate the special routing requirements of
+  // specific missions.
+  ROUTE_TYPE_SPECIAL_CORRIDOR = 28;
+  // Route established below the coordination altitude to facilitate movement
+  // of army aviation assets in the forward area in direct support of ground
+  // operations.
+  ROUTE_TYPE_STANDARD_USE_ARMY_AIRCRAFT_FLIGHT_ROUTE = 29;
+  // In naval cooperation and guidance for shipping, a preplanned single track
+  // connecting positions within the main shipping route.
+  ROUTE_TYPE_STANDARD_ROUTE = 30;
+  // Supersonic route.
+  ROUTE_TYPE_SUPERSONIC_ROUTE = 31;
+  // Tactical air navigation route.
+  ROUTE_TYPE_TACAN_ROUTE = 32;
+  // A temporary route of defined dimension recommended for use by high speed
+  // fixed-wing aircraft to route them between TRs and the rear of the forward
+  // area and their operations areas.
+  ROUTE_TYPE_TEMPORARY_MINIMUM_RISK_ROUTE = 33;
+  // Trunk route.
+  ROUTE_TYPE_TRUNK_ROUTE = 34;
+  // A temporary corridor of defined dimensions established in the forward area
+  // to minimise the risk to friendly aircraft from friendly air defences or
+  // surface forces.
+  ROUTE_TYPE_TRANSIT_ROUTE = 35;
+  // The CONTROL-FEATURE-TYPE that specifies a route along which an unmanned
+  // aerial vehicle travels.
+  ROUTE_TYPE_UNMANNED_AERIAL_VEHICLE_ROUTE = 36;
+  // The route that follows the shape or boundary of a coast.
+  ROUTE_TYPE_USUAL_COASTAL_ROUTE = 37;
+  // Any combination of other than standard routes.
+  ROUTE_TYPE_VARIABLE_TRACK_ROUTE = 38;
+  // The route or routes designated for Infantry operations.
+  ROUTE_TYPE_INFANTRY_ROUTE = 39;
+}

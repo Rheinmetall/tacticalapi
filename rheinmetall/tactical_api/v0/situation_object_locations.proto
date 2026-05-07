@@ -1,0 +1,325 @@
+// Copyright(c) 2026 Rheinmetall Electronics GmbH
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Eclipse Distribution License
+// v. 1.0 which is available at
+// http://www.eclipse.org/org/documents/edl-v10.php.
+//
+// SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
+
+syntax = "proto3";
+
+package rheinmetall.tactical_api.v0;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+
+import "rheinmetall/tactical_api/v0/types.proto";
+
+// An geographic point that has its position specified with respect to the
+// surface of the World Geodetic System 1984 (WGS 84) ellipsoid.
+message GeoPoint { 
+  // The numeric value that represents the angle between the plane of the
+  // equator and a line perpendicular to the ellipsoid surface and passing
+  // through the geographic point.
+  double latitude_coordinate = 1;
+  // The numeric value that represents the angle between the initial (zero or
+  // Greenwich) meridian and the meridian of the geographic point measured in
+  // the plane of the Equator.
+  double longitude_coordinate = 2;
+  // Specifies the vertical distance in [m].
+  google.protobuf.DoubleValue vertical_distance = 3;
+  // The specific value that represents the reference system for this geographic
+  // point.
+  VerticalDistanceReferenceCode vertical_distance_reference_code = 4;
+  // The specific MeasurementCode value that represents the type of position
+  // source used for this geographic point.
+  MeasurementCode measurement_code = 5;
+}
+
+// Extension of 'GeoPoint' for route way points.
+message WayPoint {
+  // The numeric value that represents the angle between the plane of the
+  // equator and a line perpendicular to the ellipsoid surface and passing
+  // through the geographic point.
+  double latitude_coordinate = 1;
+  // The numeric value that represents the angle between the initial (zero or
+  // Greenwich) meridian and the meridian of the geographic point measured in
+  // the plane of the Equator.
+  double longitude_coordinate = 2;
+  // Specifies the vertical distance in [m].
+  google.protobuf.DoubleValue vertical_distance = 3;
+  // The specific value that represents the reference system for this geographic
+  // point.
+  VerticalDistanceReferenceCode vertical_distance_reference_code = 4;
+  // The specific MeasurementCode value that represents the type of position
+  // source used for this geographic point.
+  MeasurementCode measurement_code = 5;
+  // Any optional name of the way point, shown on map.
+  google.protobuf.StringValue way_point_name = 6;  
+  // Optional comment for the way point.
+  google.protobuf.StringValue comment = 8;
+  // Optional relative estimated travel time (for route segment from waypoint
+  // before).
+  google.protobuf.Duration segment_travel_time = 9;
+  // Optional absolute actual arrival time.
+  google.protobuf.Timestamp arrival_time = 10;
+}
+
+// A specification of position and geometry with respect to a specified
+// horizontal frame of reference and a vertical distance measured from a
+// specified datum.
+// Note: only one of the locations is supported at a time.
+message SymbolLocation {
+  oneof location {
+    Ellipse ellipse = 1;
+    Fan fan = 2;
+    Multipoint multipoint = 3;
+    Point point = 4;   
+    SketchLocation sketch_location = 6;
+    Corridor corridor = 7;
+    Line line = 8;
+    Polygon polygon = 9;
+    RouteLocation route_location = 10;
+  }
+}
+
+// A 'SymbolLocation' for a single geographic point with optional speed and
+// course.
+message Point {
+  // Optional short name for the point location.
+  google.protobuf.StringValue name = 1;
+  // Creation time stamp of the point location.
+  google.protobuf.Timestamp location_time = 2;
+  // The geographic point of the point location.
+  GeoPoint geo_point = 3;
+  // Optional course of the point location if location is moving in [degree].
+  google.protobuf.DoubleValue course = 4;
+  // The value that denotes the motion of a specific object at a specific
+  // location in terms of distance per unit time [m/s].
+  google.protobuf.DoubleValue speed = 5;
+}
+
+// A 'SymbolLocation' planar surface in the form of an ellipse.
+message Ellipse {
+  // Optional short name for the ellipse location.
+  google.protobuf.StringValue name = 1;
+  // Creation time stamp of the ellipse location.
+  google.protobuf.Timestamp location_time = 2;
+  // The geographic point that defines the geometric centre for a specific
+  // Ellipse.
+  GeoPoint center_point = 3;
+  // The geographic point marking the diameter on the first axis of a specific
+  // Ellipse.
+  GeoPoint first_conjugate_diameter_point = 4;
+  // The geographic point marking the diameter on the second axis of a specific
+  // Ellipse.
+  GeoPoint second_conjugate_diameter_point = 5;
+}
+
+// A 'SymbolLocation' surface that is in the form of a truncated ring sector,
+// lying between and being bounded by the rays emanating from the centre-point
+// of the ring and having a specified central angle.
+// This kind of location can be used for sniper detection events for example.
+message Fan {
+  // Optional short name for the fan location.
+  google.protobuf.StringValue name = 1;
+  // Creation time stamp of the fan location.
+  google.protobuf.Timestamp location_time = 2;
+  // The one-dimensional linear distance representing the distance from the
+  // vertex to the inner ring of the ring sector used to specify the Fan in [m].
+  double minimum_range_dimension = 3;
+  // The one-dimensional linear distance representing distance from the vertex
+  // to the outer ring of the ring sector used to specify the Fan in [m].
+  google.protobuf.DoubleValue maximum_range_dimension = 4;
+  // The rotational measurement clockwise between the line of true north and the
+  // left side of the sector for a specific Fan in [degree].
+  double orientation_angle = 5;
+  // The rotational measurement clockwise between the left and right sides of
+  // the sector for a specific Fan in [degree].
+  double sector_size_angle = 6;
+  // The geographic point that defines the vertex for the specific Fan.
+  GeoPoint vertex_point = 7;
+}
+
+// A SymbolLocation that is defined by two or more geographic points for multi
+// point locations.
+// This is used for symbols with a fixed number of geographic points for symbols
+// of app6 or mil2525 standard. 'Line' and "Polygon" should be used for lines
+// and areas.
+message Multipoint {
+  // Optional short name for the multi point location.
+  google.protobuf.StringValue name = 1;
+  // Creation time stamp of the multi point location.
+  google.protobuf.Timestamp location_time = 2;
+  // The geographic points that defines the multi point locations.
+  // At least two geographical points are required.
+  repeated GeoPoint points = 3;
+}
+
+// A 'SymbolLocation' surface that is defined by its width and a sequence of
+// points.
+message Corridor {
+  // Optional short name for the corridor location.
+  google.protobuf.StringValue name = 1;
+  // Creation time stamp of the corridor location.
+  google.protobuf.Timestamp location_time = 2;
+  // The geographic points that defines the central line for a specific
+  // corridor. At least two geographical points are required.
+  repeated GeoPoint points = 3;
+  // The one-dimensional linear distance representing the horizontal distance
+  // measured from side to side for a corridor and distributed equally with
+  // respect to its centreline in [m].
+  int32 width = 4;
+}
+
+// A 'SymbolLocation' that is defined by two or more geographic points connected
+// by one-dimensional line segments.
+message Line {
+  // Optional short name for the Line location.
+  google.protobuf.StringValue name = 1;
+  // Creation time stamp of the Line location.
+  google.protobuf.Timestamp location_time = 2;
+  // The geographic points that defines the line.
+  // At least two geographical points are required.
+  repeated GeoPoint points = 3;
+}
+
+// A 'SymbolLocation' surface that has its boundaries defined by a specific
+// geographic points.
+message Polygon {
+  // Optional short name for the Polygon location.
+  google.protobuf.StringValue name = 1;
+  // Creation time stamp of the Polygon location.
+  google.protobuf.Timestamp location_time = 2;
+  // The geographic points that defines the boundary line.
+  // At least three geographical points are required.
+  repeated GeoPoint points = 3;
+}
+
+// A 'SymbolLocation' specialized for routes with WayPoints instead of
+// geographic points.
+message RouteLocation {
+  // Optional short name for the RouteLocation location.
+  google.protobuf.StringValue name = 1;
+  // Creation time stamp of the RouteLocation location.
+  google.protobuf.Timestamp location_time = 2;
+  // The WayPoints that defines the route.
+  // At least two way points are required.
+  repeated WayPoint way_points = 3;
+}
+
+// A 'SymbolLocation' specialized for free hand drawing sketches.
+message SketchLocation {
+  // Optional short name for the SketchLocation location.
+  google.protobuf.StringValue name = 1;
+  // Creation time stamp of the SketchLocation location.
+  google.protobuf.Timestamp location_time = 2;
+  // The SketchLocationElements that defines the sketch.
+  repeated SketchLocationElement elements = 3;
+}
+
+// The sketch element used inside the 'SketchLocation'.
+message SketchLocationElement {
+  // The location for the single sketch element.
+  // Normally of type 'Point', 'Line' or 'Polygon'
+  // Don't use location of type 'SketchLocation' to avoid recursion.
+  SymbolLocation location = 1;
+  // The color of the sketch element.
+  Color line_color = 2;
+  // The sketch element with in [pixel].
+  uint32 line_width = 3;
+  // The sketch element line style like, solid, dot or dash. 
+  LineStyle line_style = 4;
+  // The sketch element fill style for an area sketch element.
+  FillStyle fill_style = 5;  
+}
+
+// The specific value that represents the reference system for a specific
+// vertical distance.
+enum VerticalDistanceReferenceCode {
+  // The reference code is set to a new eum value which is not known in this
+  // interface version.
+  VERTICAL_DISTANCE_REFERENCE_CODE_UNSPECIFIED = 0;
+  // The reference code is explicitly unknown.
+  VERTICAL_DISTANCE_REFERENCE_CODE_UNKNOWN = 1;
+  // The vertical reference established as the lowest observed or theoretical
+  // sea level possible for the area, such as Mean Lower Low Water (MLLW) or
+  // Lowest Astronomical Tide (LAT).
+  VERTICAL_DISTANCE_REFERENCE_CODE_CHART_DATUM = 2;
+  // The vertical reference for a level, a point or an object considered as a
+  // point measured from a specific datum.
+  VERTICAL_DISTANCE_REFERENCE_CODE_LOCAL_DATUM = 3;
+  // The vertical reference established as the average level of the ocean
+  // surface measured over a full metonic tidal cycle of 18.6 years.
+  VERTICAL_DISTANCE_REFERENCE_CODE_MEAN_SEA_LEVEL = 4;
+  // The vertical distance reference in terms of atmospheric pressure indicated
+  // by a pressure altimeter that is calibrated to read 0 at airfield runway
+  // ground level.
+  VERTICAL_DISTANCE_REFERENCE_CODE_PRESSURE_DATUM_QFE = 5;
+  // The vertical distance reference in terms of atmospheric pressure indicated
+  // by a pressure altimeter that is calibrated to read 0 at
+  // Mean Sea Level (MSL).
+  VERTICAL_DISTANCE_REFERENCE_CODE_PRESSURE_DATUM_QNH = 6;
+  // The vertical distance reference in terms of atmospheric pressure indicated
+  // by a pressure altimeter that is calibrated to read 0 at standard atmosphere
+  // pressure of 1013.2 millibars.
+  VERTICAL_DISTANCE_REFERENCE_CODE_PRESSURE_DATUM_STANDARD_ATMOSPHERE = 7;
+  // The vertical reference is the actual visible surface. This includes both
+  // terrain and water surfaces.
+  VERTICAL_DISTANCE_REFERENCE_CODE_TOPOGRAPHIC_SURFACE = 8;
+  // The datum for vertical distance provided by the submerged surface at a
+  // point or area.
+  VERTICAL_DISTANCE_REFERENCE_CODE_WATER_BOTTOM = 9;
+  // The vertical reference established as the surface of the WGS84 geoid.
+  VERTICAL_DISTANCE_REFERENCE_CODE_WGS84_GEOID = 10;
+  // The vertical reference established as the surface of the WGS84 ellipsoid.
+  VERTICAL_DISTANCE_REFERENCE_CODE_WGS84_REFERENCE_ELLIPSOID = 11;
+}
+
+// The specific value that represents the measurement source of a geographic
+// point.
+enum MeasurementCode {
+  // No measurement source available (internal null).
+  MEASUREMENT_CODE_UNSPECIFIED = 0;
+  // Unknown measurement source.
+  MEASUREMENT_CODE_UNKNOWN = 1;
+  // The position was determined by the Global Positioning System [GPS].
+  MEASUREMENT_CODE_GPS = 2;
+  // The position was determined by a inertial positioning system.
+  MEASUREMENT_CODE_INS = 3;
+  // The position was estimated manually by user.  
+  MEASUREMENT_CODE_ESTIMATE = 4;
+  // The position was determined by a laser range finder or laser reference
+  // system [LRS].
+  MEASUREMENT_CODE_LRS = 5;
+}
+
+// The specific value that represents line style of a sketch element or route.
+enum LineStyle {
+  // Not set and same behavior as with 'Solid'.
+  LINE_STYLE_UNSPECIFIED = 0; 
+  // Solid line style.
+  LINE_STYLE_SOLID = 1;
+  // Dashed line style.
+  LINE_STYLE_DASH = 2;
+  // Dotted line style.
+  LINE_STYLE_DOT = 3;
+}
+
+// The specific value that represents fill style style of a surface sketch
+// element.
+enum FillStyle {
+  // Not set and same behavior as with 'None'. Used for line sketch elements.
+  FILL_STYLE_UNSPECIFIED = 0;
+  FILL_STYLE_NONE = 1;
+  FILL_STYLE_BACKWARD_DIAGONAL = 2;
+  FILL_STYLE_CROSS = 3;
+  FILL_STYLE_DIAGONAL_CROSS = 4;
+  FILL_STYLE_FORWARD_DIAGONAL = 5;
+  FILL_STYLE_HORIZONTAL = 6;
+  FILL_STYLE_SOLID = 7;
+  FILL_STYLE_VERTICAL = 8;
+}

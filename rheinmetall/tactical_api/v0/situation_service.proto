@@ -1,0 +1,92 @@
+// Copyright(c) 2026 Rheinmetall Electronics GmbH
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Eclipse Distribution License
+// v. 1.0 which is available at
+// http://www.eclipse.org/org/documents/edl-v10.php.
+//
+// SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
+
+syntax = "proto3";
+
+package rheinmetall.tactical_api.v0;
+
+import "rheinmetall/tactical_api/v0/service_types.proto";
+import "rheinmetall/tactical_api/v0/situation_object_types.proto";
+import "rheinmetall/tactical_api/v0/situation_object_updates.proto";
+
+// Contains methods to obtain and modify the Situation shown to the currently 
+// logged-in user.
+service Situation {
+  // Can be used to get new situation objects on the map when available.
+  // Initially, all non-deleted existing situation objects are returned
+  // for every call.
+  rpc SubscribeSituationObjectEvents(SubscribeSituationObjectEventsRequest) 
+      returns (stream SubscribeSituationObjectEventsResponse) {
+  }
+
+  // Returns all non-deleted objects in the tactical situation.
+  rpc GetSituationObjects(GetSituationObjectsRequest) 
+      returns (GetSituationObjectsResponse) {
+  }
+
+  // Creates a new situation object (if none exists for the given ID) or updates
+  // an existing one.
+  rpc AddOrUpdateSituationObjects(AddOrUpdateSituationObjectsRequest) 
+      returns (AddOrUpdateSituationObjectsResponse) {
+  }
+
+  // Marks a situation object as deleted.
+  rpc DeleteSituationObjects(DeleteSituationObjectsRequest)
+      returns (DeleteSituationObjectsResponse) {
+  }
+}
+
+// Reserved for future use.
+message SubscribeSituationObjectEventsRequest {
+}
+
+// Situation events for streaming use.
+message SubscribeSituationObjectEventsResponse {
+  // Specifies if the command was successful.
+  ResponseHeader header = 1;
+  // The returned situation objects.
+  repeated SituationObject situation_objects = 2;
+}
+
+// Reserved for future use.
+message GetSituationObjectsRequest {
+}
+
+// Contains all situation objects currently visible on the map
+message GetSituationObjectsResponse {
+  // Specifies if the command was successful.
+  ResponseHeader header = 1;
+  // A list of situation objects.
+  repeated SituationObject situation_objects = 2;
+}
+
+// Specifies the situation objects to be added or updated. 
+message AddOrUpdateSituationObjectsRequest {
+  // The situation objects - only non-null fields are updated.
+  repeated UpdateSituationObject situation_objects = 1;
+}
+
+// Specifies if AddOrUpdateSituationObjects was successful.
+message AddOrUpdateSituationObjectsResponse {
+  // The actual response.
+  ResponseHeader header = 1;
+}
+
+// Specifies the situation objects to be deleted.
+message DeleteSituationObjectsRequest {
+  // The situation objects to be deleted.
+  repeated DeleteSituationObject situation_objects = 1;
+}
+
+// Specifies if DeleteSituationObjects was successful.
+message DeleteSituationObjectsResponse {
+  // The actual response.
+  ResponseHeader header = 1;
+}

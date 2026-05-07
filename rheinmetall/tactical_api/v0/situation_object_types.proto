@@ -1,0 +1,698 @@
+// Copyright(c) 2026 Rheinmetall Electronics GmbH
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Eclipse Distribution License
+// v. 1.0 which is available at
+// http://www.eclipse.org/org/documents/edl-v10.php.
+//
+// SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
+
+syntax = "proto3";
+
+package rheinmetall.tactical_api.v0;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "rheinmetall/tactical_api/v0/situation_object_locations.proto";
+import "rheinmetall/tactical_api/v0/types.proto";
+
+// The type of the added, updated or deleted situation object.
+// Note: only one of the situation object types (all attributes besides
+// is_deleted) is supported at a time!
+message SituationObject {
+  // Indicates that the situation object is deleted.
+  DataPropertyBool is_deleted = 20;
+  // Types of situation objects.
+  oneof type {
+    Symbol symbol = 1;
+    ActionTask action_task = 2;
+    ActionEvent action_event = 3;
+    OrganizationUnit organization_unit = 4;        
+    Route route = 5;
+    TextDocument text_document = 6;
+    PictureDocument picture_document = 7;
+    VoiceMessageDocument voice_message_document = 8;
+    NatoMessageDocument nato_message_document = 9;
+    OverlayDocument overlay_document = 10;
+    SketchDocument sketch_document = 11;
+  }
+}
+
+// This meta data are part of every situation object and every data property of
+// the situation object.
+// and describes the timestamp and the reporter of object/property creation or
+// last update.
+message CreationMetaData {
+  // The timestamp of the creation or last update.
+  google.protobuf.Timestamp creation_time = 1;
+  // The identity of the reporter of creation or last update.
+  Identity creator_identity = 2;    
+}
+
+// Every situation object could have some additional attributes/information
+// created by the data management service.
+// IsInActiveInfoSpace(bool), SymbolType(int), IsAcknowledgedFlag(bool),
+// Overlays, DistanceToOwnPosition(int), Poi, Obstacle etc.
+// Note: only one of the values is supported at a time!
+message AdditionalAttributeValue {
+  oneof type {
+    string string_value = 1;
+    int32 int32_value = 2;
+    double double_value = 3;
+    bool bool_value = 4;
+  }
+}
+
+// Data property for boolean values.
+message DataPropertyBool {
+  CreationMetaData creation_meta_data = 1;
+  // Nullable boolean value
+  google.protobuf.BoolValue content = 2;
+}
+
+// Data property for integer 32 values.
+message DataPropertyInt {
+  CreationMetaData creation_meta_data = 1;
+  // Nullable integer 32 value
+  google.protobuf.Int32Value content = 2;
+}
+
+// Data property for string values.
+message DataPropertyString {
+  CreationMetaData creation_meta_data = 1;
+  // Nullable string value.
+  google.protobuf.StringValue content = 2;
+}
+
+// Data property for date time values. All date times should be UTC based.
+message DataPropertyTimestamp {
+  CreationMetaData creation_meta_data = 1;
+  // Nullable time stamp value.
+  google.protobuf.Timestamp content = 2;
+}
+
+// Data property for byte array values.
+message DataPropertyByteArray {
+  CreationMetaData creation_meta_data = 1;
+  // Byte array (empty was handled as null).
+  bytes content = 2;
+  // The byte array type as MIME type. It can be empty if the data type is
+  // obvious. See https://en.wikipedia.org/wiki/Internet_Media_Type
+  google.protobuf.StringValue type = 3;
+}
+
+// Data property for identity values with additional ID source.
+message DataPropertyIdentity {
+  CreationMetaData creation_meta_data = 1;
+  // Nullable identity value.
+  Identity content = 2;
+  // The source of the identity normally the source of the foreign key
+  // (more information below).
+  google.protobuf.StringValue source = 3;
+}
+
+// Data property for app6 or mil2525 symbol identifier values.
+message DataPropertySymbolIdentifier {
+  CreationMetaData creation_meta_data = 1;
+  // Nullable symbol identifier for standard symbols like app6 or mil2525
+  // standards.
+  SymbolIdentifier content = 2;
+}
+
+// Data property for location values.
+message DataPropertyLocation {
+  CreationMetaData creation_meta_data = 1;
+  // Nullable location.
+  SymbolLocation content = 2;
+}
+
+// Data property for a list of reference ID values.
+message DataPropertyReferences {
+  CreationMetaData creation_meta_data = 1;
+  // List of identities for reference between situation objects.
+  repeated Identity contents = 2;
+}
+
+// Data property for color values.
+message DataPropertyColor {
+  CreationMetaData creation_meta_data = 1;
+  // Nullable color.
+  Color content = 2;
+}
+
+// Data property for a list of situation object values.
+message DataPropertySituationObjects {
+  CreationMetaData creation_meta_data = 1;
+  // List of situation object. Don't use overlay documents here to avoid
+  // recursion.
+  repeated SituationObject contents = 2;
+}
+
+// Data property for dimension (X, Y, Z) in integer 32 values.
+message DataPropertyDimension {
+  CreationMetaData creation_meta_data = 1;
+  // Nullable integer 32 value in [m].
+  google.protobuf.Int32Value x = 2;
+  // Nullable integer 32 value in [m].
+  google.protobuf.Int32Value y = 3;
+  // Nullable integer 32 value in [m].
+  google.protobuf.Int32Value z = 4;
+}
+
+// Messages below are all possible data property enumerations for the situation
+// objects. 
+// All enumerations have an unspecified type. This is treated internal as null /
+// not set.
+
+// The message precedence for documents like routine, flash, normal or
+// immediate.
+message DataPropertyMessagePrecedence {
+  CreationMetaData creation_meta_data = 1;
+  MessagePrecedenceType content = 2;    
+}
+
+// The message category for documents like normal, private, warning or
+// operational.
+message DataPropertyMessageCategory {
+  CreationMetaData creation_meta_data = 1;
+  MessageCategoryType content = 2;    
+}
+
+// The possible action events type.
+message DataPropertyActionEvent {
+  CreationMetaData creation_meta_data = 1;
+  ActionEventType content = 2;    
+}
+
+// The possible action tasks type.
+message DataPropertyActionTask {
+  CreationMetaData creation_meta_data = 1;
+  ActionTaskType content = 2;    
+}
+
+// The possible action tasks status.
+message DataPropertyActionTaskStatus {
+  CreationMetaData creation_meta_data = 1;
+  ActionTaskStatusType content = 2;    
+}
+
+// The possible action tasks priority.
+message DataPropertyActionTaskPriorityCode {
+  CreationMetaData creation_meta_data = 1;
+  ActionTaskPriorityType content = 2;    
+}
+
+// The amplifier for a unit symbol like reinforced, reduced, reinforced and
+// reduced. 
+message DataPropertyReinforcement {
+  CreationMetaData creation_meta_data = 1;
+  ReinforcementType content = 2;    
+}
+
+// The unit designations like section, platoon etc.
+message DataPropertyUnitDesignation {
+  CreationMetaData creation_meta_data = 1;
+  UnitDesignation content = 2;    
+}
+
+//  The different line styles like solid, dash or dotted.
+message DataPropertyLineStyle {
+  CreationMetaData creation_meta_data = 1;
+  LineStyle content = 2;    
+}
+
+// The different route types. 
+message DataPropertyRouteType {
+  CreationMetaData creation_meta_data = 1;
+  RouteType content = 2;
+}
+
+// Describes a symbol object normally shown on map as point, line or area.
+// Normally, the symbol includes a location and a symbol identifier according to
+// the MIL2525 or APP6 standard.
+// If the symbol identifier is not specified, only a point location is expected;
+// this is an unspecified symbol that is considered hostile.
+message Symbol {
+  // The fix unique identity of the symbol.
+  Identity identity = 1;
+  // The fix creation meta data of the object like creation date time and the
+  // creating reporter ID.
+  CreationMetaData creation_meta_data = 2;    
+  // Dictionary of additional attributes created by the underlying service, like
+  // type of symbol, distance or direction to own position. For more information
+  // see 'AdditionalAttributeValue'.
+  map<string, AdditionalAttributeValue> additional_attributes = 5;
+  // Expiry timestamp of the symbol. Expired symbols are automatically marked as
+  // deleted and removed from the map. It's possible to extend this time.
+  DataPropertyTimestamp expiry_time = 6;
+  // Dictionary of foreign keys for mediation between external 
+  // systems/interfaces, some external interfaces also create their own ID for
+  // added objects.
+  map<string, DataPropertyIdentity> foreign_keys = 7;
+  // The location of the symbol. Areas, lines, corridors, points etc. are
+  // available here. 
+  DataPropertyLocation location = 8;    
+  // The name of the symbol, this is the designator for symbols in map of the
+  // mil2525 or app6 standard (only 20 chars were displayed).
+  DataPropertyString name = 9;
+  // Additional information for the symbol.
+  DataPropertyString additional_information = 10;    
+
+  // The identifier for mil2525 or app6 standard symbols. If empty this is a
+  // possible hostile unspecified symbol. 
+  DataPropertySymbolIdentifier symbol_identifier = 20;
+  // An amplifier for units that indicates number or title of higher echelon
+  // command.
+  DataPropertyString higher_formation = 21;
+  // An amplifier in a unit symbol that displays (+) for reinforced, (-) for
+  // reduced, (+) reinforced and reduced.
+  DataPropertyReinforcement reinforcement = 22;    
+  // Start time of the symbol object, used for command and control lines for
+  // example. 
+  DataPropertyTimestamp start_time = 24;
+  // End time of the symbol object, used for command and control lines for
+  // example. 
+  DataPropertyTimestamp end_time = 25;
+  // A text amplifier for equipment that indicates types of equipment.
+  DataPropertyString equipment_type = 26;
+  // A text amplifier in an equipment symbol that identifies the number of items
+  // present.
+  DataPropertyInt quantity = 27;
+  // A text amplifier for units, equipment, and installations; content is
+  // implementation specific.
+  DataPropertyString staff_comment = 28;
+  // The dimension of the symbol (normally filled by classification engines).
+  DataPropertyDimension dimension = 31;
+}
+
+// Describes a task for personal and equipment like drones.
+message ActionTask {
+  // The unique identity of the task.
+  Identity identity = 1;
+  // The fix creation meta data of the object like creation date time and the
+  // creating reporter ID.
+  CreationMetaData creation_meta_data = 2;    
+  // Dictionary of additional attributes created by the underlying service, like
+  // type of symbol, distance or direction to own position. For more information
+  // see 'AdditionalAttributeValue'.
+  map<string, AdditionalAttributeValue> additional_attributes = 5;
+  // Expiry timestamp of the action task. Expired action task automatically
+  // marked as deleted. It's possible to extend this time. 
+  DataPropertyTimestamp expiry_time = 6;
+  // Dictionary of foreign keys for mediation between external 
+  // systems/interfaces, some external interfaces also create their own ID for
+  // added objects.
+  map<string, DataPropertyIdentity> foreign_keys = 7;
+  // The location of the task. 
+  DataPropertyLocation location = 8;    
+  // The name of the action task. 
+  DataPropertyString name = 9;
+  // Additional information for the action task.
+  DataPropertyString additional_information = 10;    
+
+  // The type of action task like engage, reconnaissance etc.
+  DataPropertyActionTask action_task_type = 20;
+  // he specific value that represents the status of this particular task at a
+  // given time.
+  DataPropertyActionTaskStatus action_task_status = 21;
+  // The specific value that represents the rank of importance of a specific
+  // task in view of the planning organization.
+  DataPropertyActionTaskPriorityCode action_task_priority = 22;
+  // The numeric quotient value that represents the portion of a whole task that
+  // is estimated to have occurred or been accomplished. The value must be in
+  // the range from 0 to 100 percent.
+  // For example surveillance of drone operation.
+  DataPropertyInt completion_ratio = 23;
+  // The point in time that designates the occurrence of the planned beginning
+  // of the specific task.
+  DataPropertyTimestamp planned_start_time = 24;
+  // The point in time that designates the occurrence of the planned ending of
+  // the specific task.
+  DataPropertyTimestamp planned_end_time = 25;
+  // List of action task effect reference IDs (which are the affected objects,
+  // e.g., object to be monitored) (It is not guaranteed that the reference is
+  // also retrievable).
+  DataPropertyReferences action_task_effects = 26;
+  // List of action task resource reference IDs (the units or devices to which
+  // the task is assigned or is to be performed) (It is not guaranteed that the
+  // reference is also retrievable).
+  DataPropertyReferences action_task_resources = 27;  
+}
+
+// An action event that is an incident, phenomenon, or occasion of military
+// significance which has occurred or is occurring but for which planning is not
+// known.
+message ActionEvent {
+  // The fix unique identity of the action event.
+  Identity identity = 1;
+  // The fix creation meta data of the object like creation date time and the
+  // creating reporter ID.
+  CreationMetaData creation_meta_data = 2;       
+  // Dictionary of additional attributes created by the underlying service, like
+  // type of symbol, distance or direction to own position. For more information
+  // see 'AdditionalAttributeValue'.
+  map<string, AdditionalAttributeValue> additional_attributes = 5;
+  // Expiry timestamp of the action event. Expired action task automatically
+  // marked as deleted. It's possible to extend this time. 
+  DataPropertyTimestamp expiry_time = 6;
+  // Dictionary of foreign keys for mediation between external
+  // systems/interfaces, some external interfaces also create their own ID for
+  // added objects.
+  map<string, DataPropertyIdentity> foreign_keys = 7;
+  // The location of the event.
+  DataPropertyLocation location = 8; 
+  // The name of the event.
+  DataPropertyString name = 9;
+  // Additional information for the action event.
+  DataPropertyString additional_information = 10;    
+
+  // Type of action event like detection, accident, crash, fix etc.
+  DataPropertyActionEvent action_event_type = 20;  
+  // Location of reporting unit, materiel or system.
+  DataPropertyLocation location_of_reporter = 22;
+  // Degree to which the object resembles a threat. 
+  DataPropertyInt threat_level = 23;
+  // Description of detection like sensor information.
+  DataPropertyString detection_description = 24;
+  // Dimension of detected object.
+  DataPropertyDimension dimension = 25;
+}
+
+// A route object that is the prescribed course to be travelled from a specific
+// point of origin to a specific destination. 
+message Route {
+  // The fix unique identity of the route.
+  Identity identity = 1;
+  // The fix creation meta data of the object like creation date time and the
+  // creating reporter ID.
+  CreationMetaData creation_meta_data = 2;       
+  // Dictionary of additional attributes created by the underlying service, like
+  // type of symbol, distance or direction to own position. For more information
+  // see 'AdditionalAttributeValue'.
+  map<string, AdditionalAttributeValue> additional_attributes = 5;
+  // Expiry timestamp of the route. Expired route automatically marked as
+  // deleted. It's possible to extend this time. 
+  DataPropertyTimestamp expiry_time = 6;
+  // Dictionary of foreign keys for mediation between external
+  // systems/interfaces, some external interfaces also create their own ID for
+  // added objects.
+  map<string, DataPropertyIdentity> foreign_keys = 7;
+  // The route location of type 'RouteLocation'.
+  DataPropertyLocation location = 8;    
+  // Name of the route.
+  DataPropertyString name = 9;
+  // Additional information for the route.
+  DataPropertyString additional_information = 10;  
+    
+  // The planned march speed in [m/s].
+  DataPropertyInt march_speed = 20;
+  // The color of route on map.
+  DataPropertyColor line_color = 21;
+  // The width of the route on map [pixel].
+  DataPropertyInt line_width = 22;
+  // The route line style on map like solid, dash or dot.
+  DataPropertyLineStyle line_style = 23;
+  // The type of route. 
+  DataPropertyRouteType route_type = 24;
+}
+
+// Own organization units to describe an organization structure like an orbat.
+// Currently not supported.
+message OrganizationUnit {
+  // The fix unique identity of the organization.
+  Identity identity = 1;
+  // The fix creation meta data of the object like creation date time and the
+  // creating reporter ID.
+  CreationMetaData creation_meta_data = 2;       
+  // Dictionary of additional attributes created by the underlying service, like
+  // type of symbol, distance or direction to own position. For more information
+  // see 'AdditionalAttributeValue'.
+  map<string, AdditionalAttributeValue> additional_attributes = 5;
+  // Expiry timestamp of the organization unit. Expired action task
+  // automatically marked as deleted. It's possible to extend this time. 
+  DataPropertyTimestamp expiry_time = 6;
+  // Dictionary of foreign keys for mediation between external
+  // systems/interfaces, some external interfaces also create their own ID for
+  // added objects.
+  map<string, DataPropertyIdentity> foreign_keys = 7;
+  // Name of the organization unit.
+  DataPropertyString name = 9;
+  // Additional information for the organization unit.
+  DataPropertyString additional_information = 10;    
+
+  // The symbol identifier for this organization unit according to the MIL 2525
+  // or APP6 standard.
+  DataPropertySymbolIdentifier symbol_identifier = 20;
+  // An amplifier for units that indicates number or title of higher echelon
+  // command.
+  DataPropertyString higher_formation = 21; 
+  // The color of the organization unit on map to mark related units in lists
+  // and on map.
+  DataPropertyColor organization_unit_color = 22;
+  // The unit designation of the soldier organization unit.
+  DataPropertyUnitDesignation unit_designation = 23;
+  // List of subordinated organization units.
+  DataPropertyReferences subordinated_organization_unit_collection = 24;
+}
+
+// A document the includes a geo references free hand drawing.
+message SketchDocument {
+  // The fix unique identity of the sketch document.
+  Identity identity = 1;
+  // The fix creation meta data of the object like creation date time and the
+  // creating reporter ID.
+  CreationMetaData creation_meta_data = 2;      
+  // Dictionary of additional attributes created by the underlying service, like
+  // type of symbol, distance or direction to own position. For more information
+  // see 'AdditionalAttributeValue'.
+  map<string, AdditionalAttributeValue> additional_attributes = 5;
+  // Expiry timestamp of the route. Expired sketch automatically marked as
+  // deleted. It's possible to extend this time. 
+  DataPropertyTimestamp expiry_time = 6;
+  // Dictionary of foreign keys for mediation between external 
+  // systems/interfaces, some external interfaces also create their own ID for
+  // added objects.
+  map<string, DataPropertyIdentity> foreign_keys = 7;
+  // The sketch location with sketch elements.
+  DataPropertyLocation location = 8;    
+  // Name of the sketch.
+  DataPropertyString name = 9;
+  // Additional information to the sketch.
+  DataPropertyString additional_information = 10;    
+    
+  // The message category of the sketch document like normal, private, warning
+  // or operational.
+  DataPropertyMessageCategory message_category = 20;
+  // The message precedence of the sketch document like routine, flash, normal
+  // or immediate.
+  DataPropertyMessagePrecedence message_precedence = 21;    
+}
+
+// A text document that includes a free hand sketch and an optional location.
+message TextDocument {
+  // The fix unique identity of the test document.
+  Identity identity = 1;
+  // The fix creation meta data of the object like creation date time and the
+  // creating reporter ID.
+  CreationMetaData creation_meta_data = 2;    
+  // Dictionary of additional attributes created by the underlying service, like
+  // type of symbol, distance or direction to own position. For more information
+  // see 'AdditionalAttributeValue'.
+  map<string, AdditionalAttributeValue> additional_attributes = 5;
+  // Expiry timestamp of the text document. Expired text document automatically
+  // marked as deleted. It's possible to extend this time. 
+  DataPropertyTimestamp expiry_time = 6;
+  // Dictionary of foreign keys for mediation between external 
+  // systems/interfaces, some external interfaces also create their own ID for
+  // added objects.
+  map<string, DataPropertyIdentity> foreign_keys = 7;
+  // The optional location of the text document to set a marker on map.
+  DataPropertyLocation location = 8;   
+  // The text document title.
+  DataPropertyString name = 9;
+  // Additional information to the text document.
+  DataPropertyString additional_information = 10;    
+
+  // A sketch for the text document in the Microsoft ISF (Ink Serialized Format)
+  // See https://en.wikipedia.org/wiki/Ink_Serialized_Format.
+  DataPropertyByteArray free_hand_drawing_data = 20;
+  // Content of the text message in Rich Text Format. See 
+  // https://wikipedia.org/wiki/Rich_Text_Format. This is the preferred format,
+  // but it can be empty if it has not been provided by creator.
+  DataPropertyString content = 21;
+  // The content of the text message without formatting of the Rich Text Format
+  // (Should always be filled).
+  DataPropertyString plain_content = 22;
+  // The message category of the text document like normal, private, warning or
+  // operational.
+  DataPropertyMessageCategory message_category = 23;
+  // The message precedence of the text document like routine, flash, normal or
+  // immediate.
+  DataPropertyMessagePrecedence message_precedence = 24;    
+}
+
+// A picture document with an optional location.
+message PictureDocument {
+  // The fix unique identity of the picture document.
+  Identity identity = 1;
+  // The fix creation meta data of the object like creation date time and the
+  // creating reporter ID.
+  CreationMetaData creation_meta_data = 2;     
+  // Dictionary of additional attributes created by the underlying service, like
+  // type of symbol, distance or direction to own position. For more information
+  // see 'AdditionalAttributeValue'.
+  map<string, AdditionalAttributeValue> additional_attributes = 5;
+  // Expiry timestamp of the picture document. Expired picture document
+  // automatically marked as deleted. It's possible to extend this time. 
+  DataPropertyTimestamp expiry_time = 6;
+  // Dictionary of foreign keys for mediation between external 
+  // systems/interfaces, some external interfaces also create their own ID for
+  // added objects.
+  map<string, DataPropertyIdentity> foreign_keys = 7;
+  // The location of where the picture is taken (normally a point location).
+  DataPropertyLocation location = 8; 
+  // Name of the picture.
+  DataPropertyString name = 9;
+  // Additional information for the picture.
+  DataPropertyString additional_information = 10;    
+
+  // A thumbnail of the picture (The data from the captured image 'picture_data'
+  // was only used if sufficient bandwidth was available). The number of bytes
+  // should be less than 1000 bytes.
+  DataPropertyByteArray low_res_picture_data = 20;
+  // The serialized data of the picture.
+  DataPropertyByteArray picture_data = 21;    
+  // The direction of view when the picture was taken in [degree] from true
+  // north [0..360].
+  DataPropertyInt direction_of_view = 23;
+  // The focal length of the camera when the picture was taken in [mm].
+  DataPropertyInt focal_length = 24;
+  // A free hand drawing as picture overlay to mark details in Microsoft ISF
+  // (Ink Serialized Format)
+  // https://en.wikipedia.org/wiki/Ink_Serialized_Format.
+  DataPropertyByteArray free_hand_drawing_data = 25;
+  // The message category of the picture document like normal, private, warning
+  // or operational.
+  DataPropertyMessageCategory message_category = 26;
+  // The message precedence of the picture document like routine, flash, normal
+  // or immediate.
+  DataPropertyMessagePrecedence message_precedence = 27;    
+}
+
+// A voice message document with an optional location.
+message VoiceMessageDocument {
+  // The fix unique identity of the voice message document.
+  Identity identity = 1;
+  // The fix creation meta data of the object like creation date time and the
+  // creating reporter ID.
+  CreationMetaData creation_meta_data = 2;       
+  // Dictionary of additional attributes created by the underlying service, like
+  // type of symbol, distance or direction to own position. For more information
+  // see 'AdditionalAttributeValue' 
+  map<string, AdditionalAttributeValue> additional_attributes = 5;
+  // Expiry timestamp of the voice message document. Expired voice message
+  // document automatically marked as deleted. It's possible to extend this
+  // time. 
+  DataPropertyTimestamp expiry_time = 6;
+  // Dictionary of foreign keys for mediation between external
+  // systems/interfaces, some external interfaces also create their own ID for
+  // added objects.
+  map<string, DataPropertyIdentity> foreign_keys = 7;
+  // The optional location of the voice message document to set a marker on map.
+  DataPropertyLocation location = 8;    
+  // Name of the voice message document.
+  DataPropertyString name = 9;
+  // Additional information for the voice message document.
+  DataPropertyString additional_information = 10;    
+
+  // The serialized sound file data.
+  DataPropertyByteArray sound_file = 20;    
+  // The message category of the voice message document like normal, private,
+  // warning or operational.
+  DataPropertyMessageCategory message_category = 22;
+  // The message precedence of the voice message document like routine, flash,
+  // normal or immediate.
+  DataPropertyMessagePrecedence message_precedence = 23;    
+}
+
+// A standard message document.
+// The purpose of APP-11 is to provide user’s with definitive reference of
+// messages and supporting tables mandated for use in Joint, Land, Maritime and
+// Air Operations.
+// It is a compendium of formatted, structured and voice general purpose
+// messages for command and control of NATO forces at all levels of the Chain of
+// Command down to and including individual units. The formatted messages of
+// APP-11 are taken from the ADatP-03 database published in form of a baseline.
+// The latest version of the APP-11 catalogue consists of over 400 messages
+// covering every aspect of NATO operations.
+message NatoMessageDocument {
+  // The fix unique identity of the standard message document.
+  Identity identity = 1;
+  // The fix creation meta data of the object like creation date time and the
+  // creating reporter ID.
+  CreationMetaData creation_meta_data = 2;        
+  // Dictionary of additional attributes created by the underlying service, like
+  // type of symbol, distance or direction to own position. For more information
+  // see 'AdditionalAttributeValue'.
+  map<string, AdditionalAttributeValue> additional_attributes = 5;
+  // Expiry timestamp of the standard message document. Expired action task
+  // automatically marked as deleted. It's possible to extend this time. 
+  DataPropertyTimestamp expiry_time = 6;
+  // Dictionary of foreign keys for mediation between external
+  // systems/interfaces, some external interfaces also create their own ID for
+  // added objects.
+  map<string, DataPropertyIdentity> foreign_keys = 7;
+  // The location here should be one of the locations from the standard message.
+  // Not necessary, only shows a marker on map without parsing the MTF message
+  // for example.
+  DataPropertyLocation location = 8;    
+  // Name of the standard message document.
+  DataPropertyString name = 9;
+  // Additional information for the standard message document.
+  DataPropertyString additional_information = 10;    
+
+  // The APP11 Message Text Formats (MTF)
+  DataPropertyString mtf_message_data = 20;
+  // The message category of the standard message document like normal, private,
+  // warning or operational.
+  DataPropertyMessageCategory message_category = 21;
+  // The message precedence of the standard message document like routine,
+  // flash, normal or immediate.
+  DataPropertyMessagePrecedence message_precedence = 22;    
+}
+
+// A overlay document that contains a list of situation objects.
+message OverlayDocument {
+  // The fix unique identity of the overlay document.
+  Identity identity = 1;
+  // The fix creation meta data of the object like creation date time and the
+  // creating reporter ID.
+  CreationMetaData creation_meta_data = 2;      
+  // Dictionary of additional attributes created by the underlying service, like
+  // type of symbol, distance or direction to own position. For more information
+  // see 'AdditionalAttributeValue'.
+  map<string, AdditionalAttributeValue> additional_attributes = 5;
+  // Expiry timestamp of the overlay document. Expired overlay document
+  // automatically marked as deleted. It's possible to extend this time. 
+  DataPropertyTimestamp expiry_time = 6;
+  // Dictionary of foreign keys for mediation between external
+  // systems/interfaces, some external interfaces also create their own ID for
+  // added objects.
+  map<string, DataPropertyIdentity> foreign_keys = 7;    
+  // The name of the overlay document.
+  DataPropertyString name = 9;
+  // Additional information for the overlay document.
+  DataPropertyString additional_information = 10;    
+
+  // A two-digit tag for the overlay to describe the overlay symbols on the map.
+  DataPropertyString tag = 20;   
+  // The contained overlay situation objects.
+  DataPropertySituationObjects overlay_data = 23;
+  // The message category of the overlay document like normal, private, warning
+  // or operational.
+  DataPropertyMessageCategory message_category = 24;
+  // The message precedence of the overlay document like routine, flash, normal
+  // or immediate.
+  DataPropertyMessagePrecedence message_precedence = 25;    
+}
