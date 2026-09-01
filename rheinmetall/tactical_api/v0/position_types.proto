@@ -1,0 +1,38 @@
+// Copyright(c) 2026 Rheinmetall Electronics GmbH
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Eclipse Distribution License
+// v. 1.0 which is available at
+// http://www.eclipse.org/org/documents/edl-v10.php.
+//
+// SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
+
+syntax = "proto3";
+
+package rheinmetall.tactical_api.v0;
+
+import "google/protobuf/wrappers.proto";
+import "rheinmetall/tactical_api/v0/situation_object_locations.proto";
+
+// Specifies a position with the current point location 
+// includes timestamp, course and speed for the own pose service.
+message Position {
+  // The sensor identifier creating the position.
+  google.protobuf.StringValue source_identifier = 1;
+  // The current position. Might be null if unset or invalid.
+  rheinmetall.tactical_api.v0.Point point_location = 2;
+  // A position might be invalid if it has been previously determined via GNSS but no 
+  // updates have been received recently (e.g. because the user entered a building)
+  // in this case, the old position continues to be used but is considered outdated.
+  bool is_invalid_or_expired = 3;
+}
+
+// Specifies a position to be updated.
+message UpdatePosition {
+  // Mandatory: A Identifier of the sensor creating the position.
+  // Valid values are specified by Rheinmetall.  
+  string source_identifier = 1;
+  // The current position. Might be null if unset or invalid.
+  rheinmetall.tactical_api.v0.Point point_location = 2;
+}

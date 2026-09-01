@@ -222,7 +222,6 @@ message UpdateSymbol {
   UpdatePropertyString name = 7;
   // Addition information for the symbol.
   UpdatePropertyString additional_information = 8;
-
   // The identifier for mil2525 or app6 standard symbols. Leave empty to create
   // a possible hostile unspecified symbol. 
   UpdatePropertySymbolIdentifier symbol_identifier = 20;   
@@ -275,7 +274,6 @@ message UpdateActionTask {
   UpdatePropertyString name = 7;
   // Addition information for the action task.
   UpdatePropertyString additional_information = 8;
-
   // The type of action task like engage, reconnaissance etc.
   UpdatePropertyActionTask action_task_type = 20;
   // The specific value that represents the status of this particular task at a

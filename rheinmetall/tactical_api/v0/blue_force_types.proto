@@ -1,0 +1,85 @@
+// Copyright(c) 2026 Rheinmetall Electronics GmbH
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Eclipse Distribution License
+// v. 1.0 which is available at
+// http://www.eclipse.org/org/documents/edl-v10.php.
+//
+// SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
+
+syntax = "proto3";
+
+package rheinmetall.tactical_api.v0;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "rheinmetall/tactical_api/v0/situation_object_locations.proto";
+import "rheinmetall/tactical_api/v0/types.proto";
+
+// Specifies a blue force.
+// This can for instance be a person, a vehicle or a UxV.
+message BlueForce {
+  // Uniquely identifies the blue force.
+  // The ID is created by the system initially creating the blue force.
+  // It is responsible for avoiding duplicates in the whole system.
+  rheinmetall.tactical_api.v0.Identity identity = 1;
+  // The Last time the blue force sent a keep-alive.
+  google.protobuf.Timestamp last_contact_time = 2;
+  // A string describing how the blue force should be represented 
+  // textual.
+  google.protobuf.StringValue callsign = 3;
+  // A symbol describing how the blue force is displayed.
+  rheinmetall.tactical_api.v0.SymbolIdentifier symbol = 4;
+  // Describes how the blue force can be used.
+  BlueForceType blue_force_type = 5;  
+  // true if this blue force represents the system providing this instance.
+  bool own_blue_force = 6;
+  // The current position of the blue force.
+  rheinmetall.tactical_api.v0.Point point_location = 7;
+  // The optional unique ID of a mount host.
+  // For example, personnel riding on a vehicle or a drone mounted on the 
+  // vehicle.
+  rheinmetall.tactical_api.v0.Identity mount_host = 8;
+  // The optional unique ID of the associated organization unit from the 
+  // SituationObject -> OrganizationUnit. That means that the blue force
+  // is part of the organization unit.
+  rheinmetall.tactical_api.v0.Identity associated_organization_unit_identity = 9;
+  // true if the blue force is not present anymore.
+  bool is_deleted = 10;
+}
+
+// Specifies a blue force to be updated.
+// This can for instance be an own single force, a vehicle or a UxV.
+message UpdateBlueForce {
+  // Mandatory: Uniquely identifies the blue force.
+  // The ID is created by the system initially creating the blue force.
+  // It is responsible for avoiding duplicates in the whole system.
+  rheinmetall.tactical_api.v0.Identity identity = 1;
+  // Mandatory: The Last time the blue force sent a keep-alive.
+  google.protobuf.Timestamp last_contact_time = 2;
+  // Optional: A string describing how the blue force should be represented 
+  // textual.
+  google.protobuf.StringValue callsign = 3;
+  // Optional: A symbol describing how the blue force is displayed.
+  rheinmetall.tactical_api.v0.SymbolIdentifier symbol = 4;
+  // Optional: Describes how the blue force can be used.
+  BlueForceType blue_force_type = 5;
+  // Optional: The current position of the blue force.
+  rheinmetall.tactical_api.v0.Point point_location = 7;
+  // Optional: The unique ID of a mount host.
+  // For example, personnel riding on a vehicle or a drone mounted on the 
+  // vehicle.
+  rheinmetall.tactical_api.v0.Identity mount_host = 8; 
+}
+
+// Describes the type of the blue force.
+// Multiple types are allowed.
+message BlueForceType {
+  // The blue force is a vehicle.
+  bool is_vehicle = 1;
+  // The blue force is a UxV.
+  bool is_unmanned = 2;
+  // The blue force is a leader.
+  bool is_leader = 3;
+}

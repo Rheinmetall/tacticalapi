@@ -1,0 +1,75 @@
+// Copyright(c) 2026 Rheinmetall Electronics GmbH
+//
+// This program and the accompanying materials are made available under the
+// terms of the Eclipse Public License v. 2.0 which is available at
+// http://www.eclipse.org/legal/epl-2.0, or the Eclipse Distribution License
+// v. 1.0 which is available at
+// http://www.eclipse.org/org/documents/edl-v10.php.
+//
+// SPDX-License-Identifier: EPL-2.0 OR BSD-3-Clause
+
+syntax = "proto3";
+
+package rheinmetall.tactical_api.v0;
+
+import "rheinmetall/tactical_api/v0/position_types.proto";
+import "rheinmetall/tactical_api/v0/service_types.proto";
+
+// Contains methods to obtain and modify own position.
+service OwnPose {
+  // Can be used to get new position information when available.
+  // The returned position is the one selected as primary position source 
+  // by the application.
+  // Initially, the current position is returned.
+  rpc SubscribePositionChangedEvents(SubscribePositionEventsRequest)
+      returns (stream SubscribePositionEventsResponse) {
+  }
+
+  // Can be used to get the current position information.
+  // The returned position is the one selected as primary position source 
+  // by the application.
+  rpc GetPosition(GetPositionRequest)
+      returns (GetPositionResponse) {
+  }
+
+  // Can be used to update the position of a given position source.
+  rpc UpdatePosition(UpdatePositionRequest)
+      returns (UpdatePositionResponse) {
+  }
+}
+
+// Reserved for future use.
+message SubscribePositionEventsRequest {
+}
+
+// Position events for streaming use.
+message SubscribePositionEventsResponse {
+  // Specifies if the command was successful.
+  rheinmetall.tactical_api.v0.ResponseHeader header = 1;
+  // The returned position.
+  Position position = 3;
+}
+
+// Reserved for future use.
+message GetPositionRequest {
+}
+
+// The position currently used in the application.
+message GetPositionResponse {
+  // Specifies if the command was successful.
+  rheinmetall.tactical_api.v0.ResponseHeader header = 1;
+  // The returned position.
+  Position position = 2;
+}
+
+// Specifies the position to be updated. 
+message UpdatePositionRequest {
+  // The new position.
+  UpdatePosition position = 1;
+}
+
+// Specifies if UpdatePosition was successful.
+message UpdatePositionResponse {
+  // Specifies if the command was successful.
+  rheinmetall.tactical_api.v0.ResponseHeader header = 1;
+}
